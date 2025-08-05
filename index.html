@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRUD Google Sheets</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Data Google Sheets</h1>
+
+  <div class="form-container">
+    <input type="text" id="nama" placeholder="Nama">
+    <input type="text" id="username" placeholder="Username">
+    <select id="level">
+      <option value="">Pilih Level</option>
+      <option value="Admin">Admin</option>
+      <option value="User">User</option>
+    </select>
+    <button onclick="createData()">Tambah Data</button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nama</th>
+          <th>Username</th>
+          <th>Level</th>
+        </tr>
+      </thead>
+      <tbody id="data-table">
+        <!-- Data akan dimuat di sini -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/library/d/1-0StD8pr7JF5SIp__fVkdXVneUy2R8YWMcQEchSa8nlR5Twqo7tjLB0-/1';
+
+    document.addEventListener('DOMContentLoaded', fetchData);
+
+    function fetchData() {
+      fetch(API_URL)
+        .then(res => res.json())
+        .then(data => {
+          const table = document.getElementById('data-table');
+          table.innerHTML = '';
+          data.forEach(row => {
+            table.innerHTML += `
+              <tr>
+                <td>${row.ID}</td>
+                <td>${row.NAMA}</td>
+                <td>${row.USERNAME}</td>
+                <td>${row.LEVEL}</td>
+              </tr>
+            `;
+          });
+        })
+        .catch(error => console.error('Fetch Error:', error));
+    }
+
+    function createData() {
+      const nama = document.getElementById('nama').value;
+      const username = document.getElementById('username').value;
+      const level = document.getElementById('level').value;
+
+      if (!nama || !username || !level) {
+        alert('Lengkapi data terlebih dahulu');
+        return;
+      }
+
+      const id = Date.now().toString();
+
+      fetch(API_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: convertToFormData({
+          action: 'create',
+          ID: id,
+          NAMA: nama,
+          USERNAME: username,
+          LEVEL: level
+        }),
+        redirect: 'follow'
+      })
+      .then(res => res.text())
+      .then(txt => {
+        const response = JSON.parse(txt);
+        alert(response.message);
+        fetchData();
+        clearForm();
+      })
+      .catch(error => console.error('Fetch Error:', error));
+    }
+
+    function clearForm() {
+      document.getElementById('nama').value = '';
+      document.getElementById('username').value = '';
+      document.getElementById('level').value = '';
+    }
+
+    function convertToFormData(obj) {
+      const formData = new URLSearchParams();
+      for (const key in obj) {
+        formData.append(key, obj[key]);
+      }
+      return formData;
+    }
+  </script>
+</body>
+</html>
